@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/**
+ * @author yuzhangqu
+ */
 @RestController
 @Tag(name = "/posts")
 @RequestMapping(path = "/posts")
@@ -32,7 +35,7 @@ public class PostController {
         this.userService = userService;
     }
 
-    private EntityModel<Post> PostEntityModel(Post post) {
+    private EntityModel<Post> toPostEntityModel(Post post) {
         EntityModel<Post> postModel = EntityModel.of(post, linkTo(methodOn(PostController.class).getPost(post.getId())).withSelfRel());
         postModel.add(Link.of("/users/" + post.getAuthor(), "author").withType("GET"));
         postModel.add(Link.of("/posts/" + post.getId() + "/comments", "comments").withType("GET"));
@@ -42,7 +45,7 @@ public class PostController {
     @GetMapping(path = "/{id}")
     @Operation(summary = "根据ID获取文章")
     public ResponseEntity<EntityModel<Post>> getPost(@PathVariable String id) {
-        return ResponseEntity.status(HttpStatus.OK).body(PostEntityModel(userService.getPost(id)));
+        return ResponseEntity.status(HttpStatus.OK).body(toPostEntityModel(userService.getPost(id)));
     }
 
     @GetMapping
@@ -66,7 +69,7 @@ public class PostController {
         }
 
         userService.addPost(post);
-        return ResponseEntity.status(HttpStatus.CREATED).body(PostEntityModel(post));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toPostEntityModel(post));
     }
 
     @GetMapping(path = "/{id}/comments")

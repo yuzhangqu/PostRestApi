@@ -8,34 +8,31 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * @author yuzhangqu
+ */
 @Service
 public class UserService {
-    private static final List<User> users;
-    private static final List<Post> posts;
-    private static final List<Comment> comments;
-
-    static {
-        users = new ArrayList<>();
-        posts = new ArrayList<>();
-        comments = new ArrayList<>();
-    }
+    private static final List<User> USERS = new ArrayList<>();
+    private static final List<Post> POSTS = new ArrayList<>();
+    private static final List<Comment> COMMENTS = new ArrayList<>();
 
     public void clear() {
-        users.clear();
-        posts.clear();
-        comments.clear();
+        USERS.clear();
+        POSTS.clear();
+        COMMENTS.clear();
     }
 
     public boolean hasUser(String account) {
-        return users.stream().anyMatch(user -> user.getAccount().equals(account));
+        return USERS.stream().anyMatch(user -> user.getAccount().equals(account));
     }
 
     public User getUser(String account) {
-        return users.stream().filter(user -> user.getAccount().equals(account)).findFirst().get();
+        return USERS.stream().filter(user -> user.getAccount().equals(account)).findFirst().get();
     }
 
     public void addUser(User user) {
-        users.add(user);
+        USERS.add(user);
     }
 
     private void adjustPageParam(MutableInt pageNum, MutableInt pageSize, int total) {
@@ -58,42 +55,42 @@ public class UserService {
     public List<User> getUsers(int pageNum, int pageSize) {
         MutableInt mutablePageNum = new MutableInt(pageNum);
         MutableInt mutablePageSize = new MutableInt(pageSize);
-        adjustPageParam(mutablePageNum, mutablePageSize, users.size());
+        adjustPageParam(mutablePageNum, mutablePageSize, USERS.size());
         pageNum = mutablePageNum.getValue();
         pageSize = mutablePageSize.getValue();
-        return users.stream().skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
+        return USERS.stream().skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
     }
 
     public int countUsers() {
-        return users.size();
+        return USERS.size();
     }
 
     public boolean hasPost(String id) {
-        return posts.stream().anyMatch(post -> post.getId().equals(id));
+        return POSTS.stream().anyMatch(post -> post.getId().equals(id));
     }
 
     public Post getPost(String id) {
-        return posts.stream().filter(post -> post.getId().equals(id)).findFirst().get();
+        return POSTS.stream().filter(post -> post.getId().equals(id)).findFirst().get();
     }
 
     public void addPost(Post post) {
-        post.setId(String.valueOf(posts.size() + 1));
+        post.setId(String.valueOf(POSTS.size() + 1));
         post.setTime(Instant.now());
-        posts.add(post);
+        POSTS.add(post);
     }
 
     public List<Post> getPosts(int pageNum, int pageSize) {
         MutableInt mutablePageNum = new MutableInt(pageNum);
         MutableInt mutablePageSize = new MutableInt(pageSize);
-        adjustPageParam(mutablePageNum, mutablePageSize, posts.size());
+        adjustPageParam(mutablePageNum, mutablePageSize, POSTS.size());
         pageNum = mutablePageNum.getValue();
         pageSize = mutablePageSize.getValue();
 
-        return posts.stream().skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
+        return POSTS.stream().skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
     }
 
     public int countPosts() {
-        return posts.size();
+        return POSTS.size();
     }
 
     public List<Post> getUserPosts(String account, int pageNum, int pageSize) {
@@ -103,21 +100,21 @@ public class UserService {
         pageNum = mutablePageNum.getValue();
         pageSize = mutablePageSize.getValue();
 
-        return posts.stream().filter(post -> post.getAuthor().equals(account)).skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
+        return POSTS.stream().filter(post -> post.getAuthor().equals(account)).skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
     }
 
     public long countUserPosts(String account) {
-        return posts.stream().filter(post -> post.getAuthor().equals(account)).count();
+        return POSTS.stream().filter(post -> post.getAuthor().equals(account)).count();
     }
 
     public Comment getComment(String id) {
-        return comments.stream().filter(comment -> comment.getId().equals(id)).findFirst().get();
+        return COMMENTS.stream().filter(comment -> comment.getId().equals(id)).findFirst().get();
     }
 
     public void addComment(Comment comment) {
-        comment.setId(String.valueOf(comments.size() + 1));
+        comment.setId(String.valueOf(COMMENTS.size() + 1));
         comment.setTime(Instant.now());
-        comments.add(comment);
+        COMMENTS.add(comment);
     }
 
     public List<Comment> getPostComments(String id, int pageNum, int pageSize) {
@@ -127,10 +124,10 @@ public class UserService {
         pageNum = mutablePageNum.getValue();
         pageSize = mutablePageSize.getValue();
 
-        return comments.stream().filter(comment -> comment.getPostId().equals(id)).skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
+        return COMMENTS.stream().filter(comment -> comment.getPostId().equals(id)).skip((long) (pageNum - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
     }
 
     public long countPostComments(String id) {
-        return comments.stream().filter(comment -> comment.getPostId().equals(id)).count();
+        return COMMENTS.stream().filter(comment -> comment.getPostId().equals(id)).count();
     }
 }
