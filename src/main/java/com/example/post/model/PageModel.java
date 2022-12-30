@@ -2,6 +2,9 @@ package com.example.post.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * @author yuzhangqu
+ */
 public class PageModel<T> {
     @JsonProperty
     private T data;

@@ -3,6 +3,9 @@ package com.example.post.model;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * @author yuzhangqu
+ */
 @Getter
 @Setter
 public class User {
