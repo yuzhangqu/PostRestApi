@@ -6,3 +6,7 @@ spring:
     url: jdbc:h2:mem:post;MODE=MySQL
     username: sa
     password: sa
+mybatis:
+  mapper-locations: classpath:mybatis/mapper/**/*.xml
+  configuration:
+    object-factory: com.example.post.persistent.support.mybatis.InjectableObjectFactory

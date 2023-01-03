@@ -3,8 +3,13 @@ package com.example.post.controller;
 import com.example.post.model.PageModel;
 import com.example.post.model.User;
 import com.example.post.model.Post;
+import com.example.post.persistent.mybatis.UserMapper;
+import com.example.post.persistent.support.mybatis.IdHolder;
+import com.example.post.view.PostVO;
+import com.example.post.view.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
@@ -30,6 +35,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping(path = "/users")
 public class UserController {
     private final UserService userService;
+
+    @Autowired
+    private UserMapper userMapper;
 
     public UserController(UserService userService) {
         this.userService = userService;
@@ -63,15 +71,24 @@ public class UserController {
                 .build());
     }
 
+//    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+//    @Operation(summary = "创建用户")
+//    public ResponseEntity<EntityModel<User>> createUser(@RequestBody User user) {
+//        if (userService.hasUser(user.getAccount())) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+//        }
+//
+//        userService.addUser(user);
+//        EntityModel<User> userModel = EntityModel.of(user, linkTo(methodOn(UserController.class).getUser(user.getAccount())).withSelfRel());
+//        return ResponseEntity.status(HttpStatus.CREATED).body(userModel);
+//    }
+
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "创建用户")
-    public ResponseEntity<EntityModel<User>> createUser(@RequestBody User user) {
-        if (userService.hasUser(user.getAccount())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-
-        userService.addUser(user);
-        EntityModel<User> userModel = EntityModel.of(user, linkTo(methodOn(UserController.class).getUser(user.getAccount())).withSelfRel());
+    public ResponseEntity<EntityModel<UserVO>> createUser(@RequestBody UserVO userVO) {
+        var user = userVO.toDomain();
+        userMapper.insertUser(user);
+        EntityModel<UserVO> userModel = EntityModel.of(userVO, linkTo(methodOn(UserController.class).getUser(userVO.getAccount())).withSelfRel());
         return ResponseEntity.status(HttpStatus.CREATED).body(userModel);
     }
 
@@ -91,5 +108,15 @@ public class UserController {
                 .link(linkTo(methodOn(UserController.class).getUserPosts(account, pageable)).withSelfRel())
                 .entity(new PageModel(postModelList, pageable.getPageNumber(), pageable.getPageSize(), total))
                 .build());
+    }
+
+    @PostMapping("/{account}/posts")
+    @Operation(summary = "指定用户发布文章")
+    public ResponseEntity<EntityModel<UserVO>> createUserPost(@PathVariable String account, @RequestBody PostVO postVO) {
+        IdHolder idHolder = new IdHolder();
+        userMapper.insertUserPost(idHolder, account, postVO.toDomain());
+        var userVO = UserVO.fromDomain(userMapper.findUserById(account));
+        EntityModel<UserVO> userModel = EntityModel.of(userVO, linkTo(methodOn(UserController.class).getUser(userVO.getAccount())).withSelfRel());
+        return ResponseEntity.status(HttpStatus.CREATED).body(userModel);
     }
 }

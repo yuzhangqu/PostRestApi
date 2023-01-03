@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.post.persistent.mybatis.UserMapper">
+    <insert id="insertUser">
+        insert into `user`(`account`, `name`)
+        values (#{user.account}, #{user.name});
+    </insert>
+    <insert id="insertUserPost" useGeneratedKeys="true" keyProperty="holder.id" keyColumn="id"
+            parameterType="com.example.post.persistent.mybatis.UserMapper">
+        INSERT INTO `post`(`author`, `title`, `content`)
+        VALUES(#{account}, #{post.title}, #{post.content});
+    </insert>
+    <select id="findUserById" resultMap="model.user">
+        SELECT u.account    AS account,
+               u.name       AS name,
+               p.id         AS post_id,
+               p.title      AS post_title,
+               p.content    AS post_content,
+               p.time       AS post_time
+        FROM `user` u
+        LEFT OUTER JOIN `post` p ON u.account = p.author
+        WHERE u.account = #{account}
+    </select>
+</mapper>

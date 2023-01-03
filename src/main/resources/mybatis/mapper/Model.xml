@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="model">
+    <resultMap id="user" type="com.example.post.model.User">
+        <constructor>
+            <arg column="account" jdbcType="VARCHAR" javaType="String"/>
+            <arg column="name" jdbcType="VARCHAR" javaType="String"/>
+        </constructor>
+        <id property="account" column="account" jdbcType="VARCHAR" javaType="String"/>
+        <!-- column 属性对应来自一方（一对多的一）表主键的字段名 -->
+        <collection property="postList" ofType="com.example.post.model.Post" column="account">
+            <constructor>
+                <arg column="post_id" jdbcType="BIGINT" javaType="String"/>
+                <arg column="post_title" jdbcType="VARCHAR" javaType="String"/>
+                <arg column="post_content" jdbcType="VARCHAR" javaType="String"/>
+                <arg column="post_time" jdbcType="TIMESTAMP" javaType="java.time.Instant"/>
+            </constructor>
+            <id column="post_id" property="id" jdbcType="BIGINT" javaType="String"/>
+            <result column="post_title" property="title" jdbcType="VARCHAR" javaType="String"/>
+            <result column="post_content" property="content" jdbcType="VARCHAR" javaType="String"/>
+            <result column="post_time" property="time" jdbcType="TIMESTAMP" javaType="java.time.Instant"/>
+        </collection>
+    </resultMap>
+</mapper>
