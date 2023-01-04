@@ -27,8 +27,8 @@ public class UserVO {
 
     public static UserVO fromDomain(User user){
         UserVO userVO = new UserVO(user.getAccount(), user.getName());
-        if (user.getPostList() != null) {
-            userVO.postList = user.getPostList().stream().map(PostVO::fromDomain).collect(Collectors.toList());
+        if (user.getUserPosts() != null) {
+            userVO.postList = user.getUserPosts().stream().map(PostVO::fromDomain).collect(Collectors.toList());
         }
         return userVO;
     }

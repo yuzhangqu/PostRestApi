@@ -114,8 +114,8 @@ public class UserController {
     @Operation(summary = "指定用户发布文章")
     public ResponseEntity<EntityModel<UserVO>> createUserPost(@PathVariable String account, @RequestBody PostVO postVO) {
         IdHolder idHolder = new IdHolder();
-        userMapper.insertUserPost(idHolder, account, postVO.toDomain());
-        var userVO = UserVO.fromDomain(userMapper.findUserById(account));
+        userMapper.insertPost(idHolder, account, postVO.toDomain());
+        var userVO = UserVO.fromDomain(userMapper.selectUser(account));
         EntityModel<UserVO> userModel = EntityModel.of(userVO, linkTo(methodOn(UserController.class).getUser(userVO.getAccount())).withSelfRel());
         return ResponseEntity.status(HttpStatus.CREATED).body(userModel);
     }

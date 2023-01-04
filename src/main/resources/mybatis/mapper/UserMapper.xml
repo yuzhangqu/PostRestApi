@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.post.persistent.mybatis.UserMapper">
+    <resultMap id="userResult" type="com.example.post.model.User">
+        <constructor>
+            <idArg column="user_account" javaType="String"/>
+            <arg column="user_name" javaType="String"/>
+        </constructor>
+        <association property="userPosts" resultMap="userPosts"/>
+    </resultMap>
+
+    <resultMap id="userPosts" type="com.example.post.model.UserPosts">
+        <id column="user_account" property="userAccount" javaType="String"/>
+        <!-- column 属性对应来自一方（一对多的一）表主键的字段名 -->
+        <collection property="posts" ofType="com.example.post.model.Post" column="user_account">
+            <constructor>
+                <idArg column="post_id" javaType="String"/>
+                <arg column="post_title" javaType="String"/>
+                <arg column="post_content" javaType="String"/>
+                <arg column="post_time" javaType="java.time.Instant"/>
+            </constructor>
+            <result column="user_account" property="author" javaType="String"/>
+        </collection>
+    </resultMap>
+
     <insert id="insertUser">
-        insert into `user`(`account`, `name`)
-        values (#{user.account}, #{user.name});
+        INSERT INTO `user`(`account`, `name`)
+        VALUES(#{user.account}, #{user.name});
     </insert>
-    <insert id="insertUserPost" useGeneratedKeys="true" keyProperty="holder.id" keyColumn="id"
-            parameterType="com.example.post.persistent.mybatis.UserMapper">
+    <insert id="insertPost" useGeneratedKeys="true" keyProperty="holder.id">
         INSERT INTO `post`(`author`, `title`, `content`)
         VALUES(#{account}, #{post.title}, #{post.content});
     </insert>
-    <select id="findUserById" resultMap="model.user">
-        SELECT u.account    AS account,
-               u.name       AS name,
+    <select id="selectUser" resultMap="userResult">
+        SELECT u.account    AS user_account,
+               u.name       AS user_name,
                p.id         AS post_id,
                p.title      AS post_title,
                p.content    AS post_content,

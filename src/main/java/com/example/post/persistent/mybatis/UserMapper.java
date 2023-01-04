@@ -11,6 +11,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface UserMapper {
     void insertUser(@Param("user") User user);
-    void insertUserPost(@Param("holder") IdHolder id, @Param("account") String account, @Param("post") Post post);
-    User findUserById(@Param("account") String account);
+    void insertPost(@Param("holder") IdHolder id, String account, @Param("post") Post post);
+    User selectUser(String account);
 }

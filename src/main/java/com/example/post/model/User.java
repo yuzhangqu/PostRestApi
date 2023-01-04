@@ -11,7 +11,7 @@ import java.util.List;
 public class User {
     private String account;
     private String name;
-    private List<Post> postList;
+    private UserPosts userPosts;
 
     public User(String account, String name) {
         this.account = account;
