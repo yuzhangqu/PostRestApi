@@ -1,4 +1,4 @@
-package com.example.post.persistent.support.mybatis;
+package com.example.post.support.mybatis;
 
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.springframework.beans.BeansException;

@@ -9,4 +9,4 @@ spring:
 mybatis:
   mapper-locations: classpath:mybatis/mapper/**/*.xml
   configuration:
-    object-factory: com.example.post.persistent.support.mybatis.InjectableObjectFactory
+    object-factory: com.example.post.support.mybatis.InjectableObjectFactory

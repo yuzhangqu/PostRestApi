@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.post.persistent.mybatis.UserMapper">
+<mapper namespace="com.example.post.UserMapper">
     <resultMap id="userResult" type="com.example.post.model.User">
         <constructor>
             <idArg column="account" javaType="String"/>
@@ -39,5 +39,15 @@
         FROM `post`
         WHERE `author` = #{account}
         LIMIT #{from}, #{size};
+    </select>
+    <select id="countPostByAuthor" resultType="int">
+        SELECT COUNT(`id`)
+        FROM `post`
+        WHERE `author` = #{account}
+    </select>
+    <select id="selectPostById" resultMap="postResult">
+        SELECT *
+        FROM `post`
+        WHERE `id` = #{id}
     </select>
 </mapper>

@@ -1,7 +1,7 @@
-package com.example.post.persistent.mybatis;
+package com.example.post;
 
 import com.example.post.model.*;
-import com.example.post.persistent.support.mybatis.IdHolder;
+import com.example.post.support.mybatis.IdHolder;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,4 +16,6 @@ public interface UserMapper {
     void insertPost(@Param("holder") IdHolder id, String account, @Param("post") Post post);
     User selectUser(String account);
     List<Post> selectPostsByAuthor(String account, int from, int size);
+    int countPostByAuthor(String account);
+    Post selectPostById(String id);
 }

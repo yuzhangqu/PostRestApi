@@ -1,4 +1,4 @@
-package com.example.post.persistent.support.mybatis;
+package com.example.post.support.mybatis;
 
 /**
  * @author yuzhangqu

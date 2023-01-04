@@ -3,12 +3,11 @@ package com.example.post.controller;
 import com.example.post.model.PageModel;
 import com.example.post.model.User;
 import com.example.post.model.Post;
-import com.example.post.persistent.mybatis.UserMapper;
+import com.example.post.UserMapper;
 import com.example.post.view.PostVO;
 import com.example.post.view.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.hateoas.EntityModel;
@@ -35,11 +34,11 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class UserController {
     private final UserService userService;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserMapper userMapper) {
         this.userService = userService;
+        this.userMapper = userMapper;
     }
 
     @GetMapping(path = "/{account}")
