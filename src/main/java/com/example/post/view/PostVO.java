@@ -1,7 +1,6 @@
 package com.example.post.view;
 
 import com.example.post.model.Post;
-import com.example.post.model.User;
 import lombok.Data;
 
 import java.time.Instant;

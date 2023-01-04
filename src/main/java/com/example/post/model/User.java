@@ -2,8 +2,6 @@ package com.example.post.model;
 
 import lombok.Data;
 
-import java.util.List;
-
 /**
  * @author yuzhangqu
  */

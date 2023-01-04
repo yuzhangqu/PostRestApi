@@ -4,7 +4,6 @@ import com.example.post.model.PageModel;
 import com.example.post.model.User;
 import com.example.post.model.Post;
 import com.example.post.persistent.mybatis.UserMapper;
-import com.example.post.persistent.support.mybatis.IdHolder;
 import com.example.post.view.PostVO;
 import com.example.post.view.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -113,9 +112,10 @@ public class UserController {
     @PostMapping("/{account}/posts")
     @Operation(summary = "指定用户发布文章")
     public ResponseEntity<EntityModel<UserVO>> createUserPost(@PathVariable String account, @RequestBody PostVO postVO) {
-        IdHolder idHolder = new IdHolder();
-        userMapper.insertPost(idHolder, account, postVO.toDomain());
-        var userVO = UserVO.fromDomain(userMapper.selectUser(account));
+        var user = userMapper.selectUser(account);
+        user.getUserPosts().add(postVO.toDomain());
+        var userVO = UserVO.fromDomain(user);
+        userVO.setPosts(user.getUserPosts().findEntities(0, 10).stream().map(PostVO::fromDomain).collect(Collectors.toList()));
         EntityModel<UserVO> userModel = EntityModel.of(userVO, linkTo(methodOn(UserController.class).getUser(userVO.getAccount())).withSelfRel());
         return ResponseEntity.status(HttpStatus.CREATED).body(userModel);
     }

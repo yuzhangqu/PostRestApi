@@ -3,24 +3,22 @@
 <mapper namespace="com.example.post.persistent.mybatis.UserMapper">
     <resultMap id="userResult" type="com.example.post.model.User">
         <constructor>
-            <idArg column="user_account" javaType="String"/>
-            <arg column="user_name" javaType="String"/>
+            <idArg column="account" javaType="String"/>
+            <arg column="name" javaType="String"/>
         </constructor>
         <association property="userPosts" resultMap="userPosts"/>
     </resultMap>
-
     <resultMap id="userPosts" type="com.example.post.model.UserPosts">
-        <id column="user_account" property="userAccount" javaType="String"/>
-        <!-- column 属性对应来自一方（一对多的一）表主键的字段名 -->
-        <collection property="posts" ofType="com.example.post.model.Post" column="user_account">
-            <constructor>
-                <idArg column="post_id" javaType="String"/>
-                <arg column="post_title" javaType="String"/>
-                <arg column="post_content" javaType="String"/>
-                <arg column="post_time" javaType="java.time.Instant"/>
-            </constructor>
-            <result column="user_account" property="author" javaType="String"/>
-        </collection>
+        <id column="account" property="userAccount" javaType="String"/>
+    </resultMap>
+    <resultMap id="postResult" type="com.example.post.model.Post">
+        <constructor>
+            <idArg column="id" javaType="String"/>
+            <arg column="title" javaType="String"/>
+            <arg column="content" javaType="String"/>
+            <arg column="time" javaType="java.time.Instant"/>
+        </constructor>
+        <result property="author" column="author" javaType="String"/>
     </resultMap>
 
     <insert id="insertUser">
@@ -32,14 +30,14 @@
         VALUES(#{account}, #{post.title}, #{post.content});
     </insert>
     <select id="selectUser" resultMap="userResult">
-        SELECT u.account    AS user_account,
-               u.name       AS user_name,
-               p.id         AS post_id,
-               p.title      AS post_title,
-               p.content    AS post_content,
-               p.time       AS post_time
-        FROM `user` u
-        LEFT OUTER JOIN `post` p ON u.account = p.author
-        WHERE u.account = #{account}
+        SELECT *
+        FROM `user`
+        WHERE `account` = #{account}
+    </select>
+    <select id="selectPostsByAuthor" resultMap="postResult">
+        SELECT *
+        FROM `post`
+        WHERE `author` = #{account}
+        LIMIT #{from}, #{size};
     </select>
 </mapper>

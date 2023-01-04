@@ -1,9 +1,11 @@
 package com.example.post.model;
 
+import com.example.post.persistent.mybatis.UserMapper;
+import com.example.post.persistent.support.mybatis.IdHolder;
 import lombok.Data;
 
+import javax.inject.Inject;
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * @author yuzhangqu
@@ -11,13 +13,15 @@ import java.util.stream.Stream;
 @Data
 public class UserPosts {
     private String userAccount;
-    private List<Post> posts;
+    @Inject
+    private UserMapper userMapper;
 
-    public List<Post> findEntities(int from, int to) {
-        return this.posts.subList(from, to);
+    public List<Post> findEntities(int from, int size) {
+        return userMapper.selectPostsByAuthor(userAccount, from, size);
     }
 
-    public Stream<Post> stream() {
-        return this.posts.stream();
+    public void add(Post post) {
+        IdHolder idHolder = new IdHolder();
+        userMapper.insertPost(idHolder, userAccount, post);
     }
 }
