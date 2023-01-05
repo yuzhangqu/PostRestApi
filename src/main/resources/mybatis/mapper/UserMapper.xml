@@ -18,8 +18,19 @@
         </constructor>
         <id column="id" property="id" javaType="Long"/>
         <result column="time" property="time" javaType="java.time.Instant"/>
-        <association property="author" javaType="com.example.post.support.common.memory.Reference">
+        <association property="author" javaType="com.example.post.support.common.memory.Reference" columnPrefix="author_">
             <association property="entity" resultMap="userResult"/>
+        </association>
+    </resultMap>
+    <resultMap id="commentResult" type="com.example.post.model.Comment">
+        <constructor>
+            <arg column="commenter" javaType="String"/>
+            <arg column="content" javaType="String"/>
+        </constructor>
+        <id column="id" property="id" javaType="Long"/>
+        <result column="time" property="time" javaType="java.time.Instant"/>
+        <association property="post" javaType="com.example.post.support.common.memory.Reference" columnPrefix="post_">
+            <association property="entity" resultMap="postResult"/>
         </association>
     </resultMap>
 
@@ -42,7 +53,9 @@
         VALUES(#{user.account}, #{user.name});
     </insert>
     <select id="selectPostsByAuthor" resultMap="postResult">
-        SELECT p.id, p.title, p.content, p.time, u.account, u.name
+        SELECT p.id, p.title, p.content, p.time,
+               u.account AS author_account,
+               u.name AS author_name
         FROM `post` p
         LEFT OUTER JOIN `user` u on p.author = u.account
         WHERE p.author = #{account}
@@ -58,13 +71,17 @@
         VALUES(#{account}, #{post.title}, #{post.content});
     </insert>
     <select id="selectPost" resultMap="postResult">
-        SELECT p.id, p.title, p.content, p.time, u.account, u.name
+        SELECT p.id, p.title, p.content, p.time,
+               u.account AS author_account,
+               u.name AS author_name
         FROM `post` p
         LEFT OUTER JOIN `user` u on p.author = u.account
         WHERE p.id = #{id}
     </select>
     <select id="selectPosts" resultMap="postResult">
-        SELECT p.id, p.title, p.content, p.time, u.account, u.name
+        SELECT p.id, p.title, p.content, p.time,
+               u.account AS author_account,
+               u.name AS author_name
         FROM `post` p
         LEFT OUTER JOIN `user` u on p.author = u.account
         LIMIT #{from}, #{size};
@@ -73,6 +90,44 @@
         SELECT COUNT(1)
         FROM `post`
     </select>
+    <select id="selectCommentsByPostId" resultMap="commentResult">
+        SELECT c.id, c.commenter, c.content, c.time,
+               p.id AS post_id,
+               p.title AS post_title,
+               p.content AS post_content,
+               p.time AS post_time,
+               u.account AS post_author_account,
+               u.name AS post_author_name
+        FROM `comment` c
+        LEFT OUTER JOIN `post` p on c.post_id = p.id
+        LEFT OUTER JOIN `user` u on p.author = u.account
+        WHERE c.post_id = #{postId}
+        LIMIT #{from}, #{size};
+    </select>
+    <select id="countCommentsByPostId" resultType="int">
+        SELECT COUNT(1)
+        FROM `comment`
+        WHERE `post_id` = #{postId}
+    </select>
+    <insert id="insertComment" useGeneratedKeys="true" keyProperty="holder.id">
+        INSERT INTO `comment`(`postId`, `commenter`, `content`)
+        VALUES(#{postId}, #{comment.commenter}, #{comment.content});
+    </insert>
+    <select id="selectComment" resultMap="commentResult">
+        SELECT c.id, c.commenter, c.content, c.time,
+               p.id AS post_id,
+               p.title AS post_title,
+               p.content AS post_content,
+               p.time AS post_time,
+               u.account AS post_author_account,
+               u.name AS post_author_name
+        FROM `comment` c
+        LEFT OUTER JOIN `post` p on c.post_id = p.id
+        LEFT OUTER JOIN `user` u on p.author = u.account
+        WHERE c.id = #{id}
+        LIMIT #{from}, #{size};
+    </select>
+
     <delete id="clearUser">
         truncate table `user`;
     </delete>

@@ -15,6 +15,7 @@ public class Post {
     private String content;
     private Instant time;
     private HasOne<User> author;
+    private PostComments postComments;
 
     public Post(String title, String content) {
         this.title = title;

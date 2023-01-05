@@ -3,6 +3,8 @@ package com.example.post.controller;
 import com.example.post.model.Comment;
 import com.example.post.model.PageModel;
 import com.example.post.model.Post;
+import com.example.post.support.common.Pagination;
+import com.example.post.view.CommentVO;
 import com.example.post.view.PostVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -69,35 +71,36 @@ public class PostController {
                 .build());
     }
 
-//    @GetMapping(path = "/{id}/comments")
-//    @Operation(summary = "获取文章的评论列表")
-//    public ResponseEntity<RepresentationModel<?>> getPostComments(@PathVariable String id, @PageableDefault(page = 1) Pageable pageable) {
-//        if (!userService.hasPost(id)) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-//        }
-//
-//        List<Comment> comments = userService.getPostComments(id, pageable.getPageNumber(), pageable.getPageSize());
-//        int total = Math.toIntExact(userService.countPostComments(id));
-//        List<EntityModel> commentModelList = comments.stream().map(comment -> EntityModel.of(linkTo(methodOn(CommentController.class).getComment(comment.getId())).withSelfRel())).collect(Collectors.toList());
-//
-//        return ResponseEntity.status(HttpStatus.OK).body(HalModelBuilder.emptyHalModel()
-//                .link(linkTo(methodOn(PostController.class).getPostComments(id, pageable)).withSelfRel())
-//                .entity(new PageModel(commentModelList, pageable.getPageNumber(), pageable.getPageSize(), total))
-//                .build());
-//    }
+    @GetMapping(path = "/{id}/comments")
+    @Operation(summary = "获取文章的评论列表")
+    public ResponseEntity<RepresentationModel<?>> getPostComments(@PathVariable Long postId, @PageableDefault(page = 1) Pageable pageable) {
+        var post = userMapper.selectPost(postId);
+        if (post == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
 
-//    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-//    @Operation(summary = "发布评论")
-//    public ResponseEntity<EntityModel<Comment>> createComment(@RequestBody Comment comment) {
-//        if (!userService.hasUser(comment.getAuthor())) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//
-//        if (!userService.hasPost(comment.getPostId())) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-//        }
-//
-//        userService.addComment(comment);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(toCommentEntityModel(comment));
-//    }
+        var pagination = new Pagination<>(pageable.getPageSize(), post.getPostComments().getAll());
+        var page = pagination.page(max(1, pageable.getPageNumber()) - 1);
+        int total = post.getPostComments().size();
+        List<EntityModel> modelList = page.stream().map(comment -> EntityModel.of(linkTo(methodOn(CommentController.class).getComment(comment.getId())).withSelfRel())).collect(Collectors.toList());
+
+        return ResponseEntity.status(HttpStatus.OK).body(HalModelBuilder.emptyHalModel()
+                .link(linkTo(methodOn(PostController.class).getPostComments(postId, pageable)).withSelfRel())
+                .entity(new PageModel(modelList, pageable.getPageNumber(), pageable.getPageSize(), total))
+                .build());
+    }
+
+    @PostMapping(path = "/{id}/comments", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "对指定文章发布评论")
+    public ResponseEntity<EntityModel<CommentVO>> createComment(@PathVariable Long postId, @RequestBody CommentVO commentVO) {
+        var post = userMapper.selectPost(postId);
+        if (post == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        var idHolder = post.getPostComments().add(commentVO.toDomain());
+        var dbCommentVO = CommentVO.fromDomain(userMapper.selectComment(idHolder.getId()));
+        var entityModel = EntityModel.of(dbCommentVO, linkTo(methodOn(CommentController.class).getComment(dbCommentVO.getId())).withSelfRel());
+        return ResponseEntity.status(HttpStatus.CREATED).body(entityModel);
+    }
 }

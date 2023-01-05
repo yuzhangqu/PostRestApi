@@ -98,7 +98,7 @@ public class UserController {
                 .build());
     }
 
-    @PostMapping("/{account}/posts")
+    @PostMapping(path = "/{account}/posts", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "指定用户发布文章")
     public ResponseEntity<EntityModel<PostVO>> createUserPost(@PathVariable String account, @RequestBody PostVO postVO) {
         var user = userMapper.selectUser(account);

@@ -22,6 +22,11 @@ public interface UserMapper {
     Post selectPost(Long id);
     List<Post> selectPosts(int from, int size);
     int countPosts();
+    List<Post> selectCommentsByPostId(Long postId, int from, int size);
+    int countCommentsByPostId(Long postId);
+    void insertComment(@Param("holder") IdHolder id, Long postId, @Param("comment") Comment comment);
+    Comment selectComment(Long id);
+
     void clearUser();
     void clearPost();
 }
