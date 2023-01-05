@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.post.UserMapper">
+<mapper namespace="com.example.post.controller.UserMapper">
     <resultMap id="userResult" type="com.example.post.model.User">
         <constructor>
             <idArg column="account" javaType="String"/>
@@ -13,41 +13,70 @@
     </resultMap>
     <resultMap id="postResult" type="com.example.post.model.Post">
         <constructor>
-            <idArg column="id" javaType="String"/>
             <arg column="title" javaType="String"/>
             <arg column="content" javaType="String"/>
-            <arg column="time" javaType="java.time.Instant"/>
         </constructor>
-        <result property="author" column="author" javaType="String"/>
+        <id column="id" property="id" javaType="Long"/>
+        <result column="time" property="time" javaType="java.time.Instant"/>
+        <association property="author" javaType="com.example.post.support.common.memory.Reference">
+            <association property="entity" resultMap="userResult"/>
+        </association>
     </resultMap>
 
-    <insert id="insertUser">
-        INSERT INTO `user`(`account`, `name`)
-        VALUES(#{user.account}, #{user.name});
-    </insert>
-    <insert id="insertPost" useGeneratedKeys="true" keyProperty="holder.id">
-        INSERT INTO `post`(`author`, `title`, `content`)
-        VALUES(#{account}, #{post.title}, #{post.content});
-    </insert>
     <select id="selectUser" resultMap="userResult">
         SELECT *
         FROM `user`
         WHERE `account` = #{account}
     </select>
-    <select id="selectPostsByAuthor" resultMap="postResult">
+    <select id="selectUsers" resultMap="userResult">
         SELECT *
-        FROM `post`
-        WHERE `author` = #{account}
+        FROM `user`
         LIMIT #{from}, #{size};
     </select>
-    <select id="countPostByAuthor" resultType="int">
-        SELECT COUNT(`id`)
+    <select id="countUsers" resultType="int">
+        SELECT COUNT(1)
+        FROM `user`
+    </select>
+    <insert id="insertUser">
+        INSERT INTO `user`(`account`, `name`)
+        VALUES(#{user.account}, #{user.name});
+    </insert>
+    <select id="selectPostsByAuthor" resultMap="postResult">
+        SELECT p.id, p.title, p.content, p.time, u.account, u.name
+        FROM `post` p
+        LEFT OUTER JOIN `user` u on p.author = u.account
+        WHERE p.author = #{account}
+        LIMIT #{from}, #{size};
+    </select>
+    <select id="countPostsByAuthor" resultType="int">
+        SELECT COUNT(1)
         FROM `post`
         WHERE `author` = #{account}
     </select>
-    <select id="selectPostById" resultMap="postResult">
-        SELECT *
-        FROM `post`
-        WHERE `id` = #{id}
+    <insert id="insertPost" useGeneratedKeys="true" keyProperty="holder.id">
+        INSERT INTO `post`(`author`, `title`, `content`)
+        VALUES(#{account}, #{post.title}, #{post.content});
+    </insert>
+    <select id="selectPost" resultMap="postResult">
+        SELECT p.id, p.title, p.content, p.time, u.account, u.name
+        FROM `post` p
+        LEFT OUTER JOIN `user` u on p.author = u.account
+        WHERE p.id = #{id}
     </select>
+    <select id="selectPosts" resultMap="postResult">
+        SELECT p.id, p.title, p.content, p.time, u.account, u.name
+        FROM `post` p
+        LEFT OUTER JOIN `user` u on p.author = u.account
+        LIMIT #{from}, #{size};
+    </select>
+    <select id="countPosts" resultType="int">
+        SELECT COUNT(1)
+        FROM `post`
+    </select>
+    <delete id="clearUser">
+        truncate table `user`;
+    </delete>
+    <delete id="clearPost">
+        truncate table `post`;
+    </delete>
 </mapper>

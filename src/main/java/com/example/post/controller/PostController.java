@@ -3,6 +3,7 @@ package com.example.post.controller;
 import com.example.post.model.Comment;
 import com.example.post.model.PageModel;
 import com.example.post.model.Post;
+import com.example.post.view.PostVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.max;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
@@ -29,63 +31,73 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @Tag(name = "/posts")
 @RequestMapping(path = "/posts")
 public class PostController {
-    private final UserService userService;
+    private final UserMapper userMapper;
 
-    public PostController(UserService userService) {
-        this.userService = userService;
+    public PostController(UserMapper userMapper) {
+        this.userMapper = userMapper;
     }
 
-    private EntityModel<Post> toPostEntityModel(Post post) {
-        EntityModel<Post> postModel = EntityModel.of(post, linkTo(methodOn(PostController.class).getPost(post.getId())).withSelfRel());
-        postModel.add(Link.of("/users/" + post.getAuthor(), "author").withType("GET"));
-        postModel.add(Link.of("/posts/" + post.getId() + "/comments", "comments").withType("GET"));
-        return postModel;
+    private EntityModel<PostVO> toPostVOEntityModel(Post post) {
+        var postVO = PostVO.fromDomain(post);
+        var entityModel = EntityModel.of(postVO, linkTo(methodOn(PostController.class).getPost(postVO.getId())).withSelfRel());
+        entityModel.add(Link.of("/users/" + postVO.getAuthor().getAccount(), "author").withType("GET"));
+        entityModel.add(Link.of("/posts/" + postVO.getId() + "/comments", "comments").withType("GET"));
+        return entityModel;
     }
 
     @GetMapping(path = "/{id}")
     @Operation(summary = "根据ID获取文章")
-    public ResponseEntity<EntityModel<Post>> getPost(@PathVariable String id) {
-        return ResponseEntity.status(HttpStatus.OK).body(toPostEntityModel(userService.getPost(id)));
+    public ResponseEntity<EntityModel<PostVO>> getPost(@PathVariable Long id) {
+        var post = userMapper.selectPost(id);
+        if (post == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(toPostVOEntityModel(post));
     }
 
     @GetMapping
     @Operation(summary = "获取所有文章列表")
     public ResponseEntity<RepresentationModel<?>> getAllPosts(@PageableDefault(page = 1) Pageable pageable) {
-        List<Post> posts = userService.getPosts(pageable.getPageNumber(), pageable.getPageSize());
-        int total = userService.countPosts();
-        List<EntityModel> postModelList = posts.stream().map(post -> EntityModel.of(linkTo(methodOn(PostController.class).getPost(post.getId())).withSelfRel())).collect(Collectors.toList());
+        var posts = userMapper.selectPosts((max(1, pageable.getPageNumber()) - 1) * pageable.getPageSize(), pageable.getPageSize());
+        int total = userMapper.countPosts();
+        List<EntityModel> modelList = posts.stream().map(post -> EntityModel.of(linkTo(methodOn(PostController.class).getPost(post.getId())).withSelfRel())).collect(Collectors.toList());
 
         return ResponseEntity.status(HttpStatus.OK).body(HalModelBuilder.emptyHalModel()
                 .link(linkTo(methodOn(PostController.class).getAllPosts(pageable)).withSelfRel())
-                .entity(new PageModel(postModelList, pageable.getPageNumber(), pageable.getPageSize(), total))
+                .entity(new PageModel(modelList, pageable.getPageNumber(), pageable.getPageSize(), total))
                 .build());
     }
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "发布文章")
-    public ResponseEntity<EntityModel<Post>> createPost(@RequestBody Post post) {
-        if (!userService.hasUser(post.getAuthor())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+//    @GetMapping(path = "/{id}/comments")
+//    @Operation(summary = "获取文章的评论列表")
+//    public ResponseEntity<RepresentationModel<?>> getPostComments(@PathVariable String id, @PageableDefault(page = 1) Pageable pageable) {
+//        if (!userService.hasPost(id)) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+//        }
+//
+//        List<Comment> comments = userService.getPostComments(id, pageable.getPageNumber(), pageable.getPageSize());
+//        int total = Math.toIntExact(userService.countPostComments(id));
+//        List<EntityModel> commentModelList = comments.stream().map(comment -> EntityModel.of(linkTo(methodOn(CommentController.class).getComment(comment.getId())).withSelfRel())).collect(Collectors.toList());
+//
+//        return ResponseEntity.status(HttpStatus.OK).body(HalModelBuilder.emptyHalModel()
+//                .link(linkTo(methodOn(PostController.class).getPostComments(id, pageable)).withSelfRel())
+//                .entity(new PageModel(commentModelList, pageable.getPageNumber(), pageable.getPageSize(), total))
+//                .build());
+//    }
 
-        userService.addPost(post);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toPostEntityModel(post));
-    }
-
-    @GetMapping(path = "/{id}/comments")
-    @Operation(summary = "获取文章的评论列表")
-    public ResponseEntity<RepresentationModel<?>> getPostComments(@PathVariable String id, @PageableDefault(page = 1) Pageable pageable) {
-        if (!userService.hasPost(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        List<Comment> comments = userService.getPostComments(id, pageable.getPageNumber(), pageable.getPageSize());
-        int total = Math.toIntExact(userService.countPostComments(id));
-        List<EntityModel> commentModelList = comments.stream().map(comment -> EntityModel.of(linkTo(methodOn(CommentController.class).getComment(comment.getId())).withSelfRel())).collect(Collectors.toList());
-
-        return ResponseEntity.status(HttpStatus.OK).body(HalModelBuilder.emptyHalModel()
-                .link(linkTo(methodOn(PostController.class).getPostComments(id, pageable)).withSelfRel())
-                .entity(new PageModel(commentModelList, pageable.getPageNumber(), pageable.getPageSize(), total))
-                .build());
-    }
+//    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+//    @Operation(summary = "发布评论")
+//    public ResponseEntity<EntityModel<Comment>> createComment(@RequestBody Comment comment) {
+//        if (!userService.hasUser(comment.getAuthor())) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//
+//        if (!userService.hasPost(comment.getPostId())) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+//        }
+//
+//        userService.addComment(comment);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(toCommentEntityModel(comment));
+//    }
 }

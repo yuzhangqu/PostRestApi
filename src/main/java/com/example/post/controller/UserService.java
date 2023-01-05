@@ -74,7 +74,7 @@ public class UserService {
     }
 
     public void addPost(Post post) {
-        post.setId(String.valueOf(POSTS.size() + 1));
+        post.setId(Integer.toUnsignedLong(POSTS.size() + 1));
         post.setTime(Instant.now());
         POSTS.add(post);
     }

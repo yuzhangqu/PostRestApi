@@ -6,7 +6,5 @@ import java.util.Optional;
  * @author yuzhangqu
  */
 public interface HasMany<ID, T> {
-    Many<T> findAll();
-
-    Optional<T> findById(ID identifier);
+    Many<T> getAll();
 }

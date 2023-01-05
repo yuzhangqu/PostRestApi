@@ -11,7 +11,6 @@ import java.util.Optional;
  * @author yuzhangqu
  */
 public abstract class EntityList<ID, T> implements Many<T>, HasMany<ID, T> {
-    protected abstract T findEntity(ID id);
     protected abstract List<T> findEntities(int from, int to);
 
     @Override
@@ -20,13 +19,8 @@ public abstract class EntityList<ID, T> implements Many<T>, HasMany<ID, T> {
     }
 
     @Override
-    public final Many<T> findAll() {
+    public final Many<T> getAll() {
         return this;
-    }
-
-    @Override
-    public final Optional<T> findById(ID id) {
-        return Optional.ofNullable(findEntity(id));
     }
 
     @Override

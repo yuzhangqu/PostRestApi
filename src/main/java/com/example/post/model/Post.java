@@ -1,5 +1,6 @@
 package com.example.post.model;
 
+import com.example.post.support.common.HasOne;
 import lombok.Data;
 
 import java.time.Instant;
@@ -9,21 +10,13 @@ import java.time.Instant;
  */
 @Data
 public class Post {
-    private String id;
+    private Long id;
     private String title;
-    private String author;
     private String content;
     private Instant time;
+    private HasOne<User> author;
 
-    public Post(String id, String title, String content, Instant time) {
-        this.id = id;
-        this.title = title;
-        this.content = content;
-        this.time = time;
-    }
-
-    public Post(String author, String title, String content) {
-        this.author = author;
+    public Post(String title, String content) {
         this.title = title;
         this.content = content;
     }

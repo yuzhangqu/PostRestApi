@@ -12,7 +12,6 @@ import java.util.*;
 public class UserVO {
     private String account;
     private String name;
-    private List<PostVO> posts;
 
     public UserVO(String account, String name) {
         this.account = account;

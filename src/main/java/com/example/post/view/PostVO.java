@@ -1,6 +1,7 @@
 package com.example.post.view;
 
 import com.example.post.model.Post;
+import com.example.post.support.common.memory.Reference;
 import lombok.Data;
 
 import java.time.Instant;
@@ -10,24 +11,34 @@ import java.time.Instant;
  */
 @Data
 public class PostVO {
-    private String id;
+    private Long id;
     private String title;
     private String content;
     private Instant time;
+    private UserVO author;
 
-    public PostVO(String id, String title, String content, Instant time) {
-        this.id = id;
+    public PostVO(String title, String content) {
         this.title = title;
         this.content = content;
-        this.time = time;
     }
 
     public Post toDomain() {
-        Post post = new Post(this.id, this.title, this.content, this.time);
+        var post = new Post(this.title, this.content);
+        post.setId(this.id);
+        post.setTime(this.time);
+        if (this.author != null) {
+            post.setAuthor(new Reference<>(this.author.toDomain()));
+        }
         return post;
     }
 
     public static PostVO fromDomain(Post post) {
-        return new PostVO(post.getId(), post.getTitle(), post.getContent(), post.getTime());
+        var postVO = new PostVO(post.getTitle(), post.getContent());
+        postVO.setId(post.getId());
+        postVO.setTime(post.getTime());
+        if (post.getAuthor().get() != null) {
+            postVO.setAuthor(UserVO.fromDomain(post.getAuthor().get()));
+        }
+        return postVO;
     }
 }
