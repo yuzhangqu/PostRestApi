@@ -2,7 +2,6 @@ package com.example.post.controller;
 
 import com.example.post.model.Comment;
 import com.example.post.view.CommentVO;
-import com.example.post.view.PostVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.hateoas.EntityModel;
@@ -27,7 +26,7 @@ public class CommentController {
         this.userMapper = userMapper;
     }
 
-    private EntityModel<CommentVO> toCommentVOEntityModel(Comment comment) {
+    public static EntityModel<CommentVO> toCommentVOEntityModel(Comment comment) {
         var commentVO = CommentVO.fromDomain(comment);
         var entityModel = EntityModel.of(commentVO, linkTo(methodOn(CommentController.class).getComment(commentVO.getId())).withSelfRel());
         entityModel.add(Link.of("/posts/" + commentVO.getPost().getId(), "post").withType("GET"));

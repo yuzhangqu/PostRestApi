@@ -3,8 +3,6 @@ package com.example.post.view;
 import com.example.post.model.User;
 import lombok.Data;
 
-import java.util.*;
-
 /**
  * @author yuzhangqu
  */

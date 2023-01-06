@@ -1,7 +1,6 @@
 package com.example.post.controller;
 
 import com.example.post.model.PageModel;
-import com.example.post.model.Post;
 import com.example.post.support.common.Pagination;
 import com.example.post.view.PostVO;
 import com.example.post.view.UserVO;
@@ -107,8 +106,7 @@ public class UserController {
         }
 
         var idHolder = user.getUserPosts().add(postVO.toDomain());
-        var dbPostVO = PostVO.fromDomain(userMapper.selectPost(idHolder.getId()));
-        var entityModel = EntityModel.of(dbPostVO, linkTo(methodOn(PostController.class).getPost(dbPostVO.getId())).withSelfRel());
-        return ResponseEntity.status(HttpStatus.CREATED).body(entityModel);
+        var post = userMapper.selectPost(idHolder.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(PostController.toPostVOEntityModel(post));
     }
 }

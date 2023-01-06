@@ -50,21 +50,22 @@ class PostApplicationTests {
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content("{\"title\":\"李四的文章1\", \"content\":\"李四的文章1的内容\"}"));
 
-//        mockMvc.perform(post("/posts/1/comments")
-//                .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                .content("{\"commenter\":\"网友1\", \"content\":\"张三文章1的评论1\"}"));
-//        mockMvc.perform(post("/posts/1/comments")
-//                .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                .content("{\"commenter\":\"网友2\", \"content\":\"张三文章1的评论2\"}"));
-//        mockMvc.perform(post("/posts/1/comments")
-//                .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                .content("{\"commenter\":\"网友3\", \"content\":\"张三文章1的评论3\"}"));
+        mockMvc.perform(post("/posts/1/comments")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content("{\"commenter\":\"网友1\", \"content\":\"张三文章1的评论1\"}"));
+        mockMvc.perform(post("/posts/1/comments")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content("{\"commenter\":\"网友2\", \"content\":\"张三文章1的评论2\"}"));
+        mockMvc.perform(post("/posts/1/comments")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content("{\"commenter\":\"网友3\", \"content\":\"张三文章1的评论3\"}"));
     }
 
     @AfterEach
     void teardown() {
         userMapper.clearUser();
         userMapper.clearPost();
+        userMapper.clearComment();
     }
 
     @Test
@@ -119,12 +120,13 @@ class PostApplicationTests {
 
     @Test
     void testCreatePost() throws Exception {
-        var originCount = userMapper.countPostsByAuthor("lisi");
+        var user = userMapper.selectUser("lisi");
+        var originCount = user.getUserPosts().size();
         mockMvc.perform(post("/users/lisi/posts")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("{\"title\":\"李四的文章2\", \"content\":\"李四的文章2的内容\"}"))
                 .andExpect(status().isCreated());
-        assertThat(userMapper.countPostsByAuthor("lisi")).isEqualTo(originCount + 1);
+        assertThat(user.getUserPosts().size()).isEqualTo(originCount + 1);
     }
 
     @Test
@@ -186,43 +188,64 @@ class PostApplicationTests {
                 .andExpect(jsonPath("$.title").value("张三的文章1"));
     }
 
-//    @Test
-//    void testGetPostComments() throws Exception {
-//        mockMvc.perform(get("/posts/1/comments"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.data", hasSize(2)));
-//    }
-//
-//    @Test
-//    void testCreateComment() throws Exception {
-//        var originCount = userService.countPostComments("1");
-//        mockMvc.perform(post("/comments")
-//                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                        .content("{\"author\":\"zhangsan\", \"postId\":\"1\", \"content\":\"张三对张三文章1的评论1\"}"))
-//                .andExpect(status().isCreated());
-//        assertThat(userService.countPostComments("1")).isEqualTo(originCount + 1);
-//    }
-//
-//    @Test
-//    void testCreateCommentAuthorNotExist() throws Exception {
-//        mockMvc.perform(post("/comments")
-//                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                        .content("{\"author\":\"wrongAccount\", \"postId\":\"1\", \"content\":\"新人对张三文章1的评论1\"}"))
-//                .andExpect(status().isUnauthorized());
-//    }
-//
-//    @Test
-//    void testCreateCommentPostNotExist() throws Exception {
-//        mockMvc.perform(post("/comments")
-//                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-//                        .content("{\"author\":\"zhangsan\", \"postId\":\"404\", \"content\":\"张三的评论\"}"))
-//                .andExpect(status().isBadRequest());
-//    }
-//
-//    @Test
-//    void testGetComment() throws Exception {
-//        mockMvc.perform(get("/comments/1"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.content").value("李四对张三文章1的评论1"));
-//    }
+    @Test
+    void testGetPostNotExist() throws Exception {
+        mockMvc.perform(get("/posts/404"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testGetPostComments() throws Exception {
+        mockMvc.perform(get("/posts/1/comments")
+                        .queryParam("page", "1")
+                        .queryParam("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", hasSize(2)));
+
+        mockMvc.perform(get("/posts/1/comments")
+                        .queryParam("page", "2")
+                        .queryParam("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", hasSize(1)));
+
+        mockMvc.perform(get("/posts/1/comments")
+                        .queryParam("page", "3")
+                        .queryParam("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", hasSize(0)));
+    }
+
+    @Test
+    void testGetPostCommentsPostNotExist() throws Exception {
+        mockMvc.perform(get("/posts/404/comments")
+                        .queryParam("page", "1")
+                        .queryParam("size", "2"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testCreateComment() throws Exception {
+        var post = userMapper.selectPost(1L);
+        var originCount = post.getPostComments().size();
+        mockMvc.perform(post("/posts/1/comments")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content("{\"content\":\"匿名评论1\"}"))
+                .andExpect(status().isCreated());
+        assertThat(post.getPostComments().size()).isEqualTo(originCount + 1);
+    }
+
+    @Test
+    void testCreateCommentPostNotExist() throws Exception {
+        mockMvc.perform(post("/posts/404/comments")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content("{\"content\":\"新评论\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testGetComment() throws Exception {
+        mockMvc.perform(get("/comments/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value("张三文章1的评论1"));
+    }
 }

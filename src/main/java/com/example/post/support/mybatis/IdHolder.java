@@ -6,8 +6,8 @@ import lombok.Data;
  * @author yuzhangqu
  */
 @Data
-public class IdHolder {
-    private Long id;
+public class IdHolder<T> {
+    private T id;
 
     public String id() {
         return id.toString();

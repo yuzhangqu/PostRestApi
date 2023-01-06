@@ -18,15 +18,16 @@ public interface UserMapper {
     void insertUser(@Param("user") User user);
     List<Post> selectPostsByAuthor(String account, int from, int size);
     int countPostsByAuthor(String account);
-    void insertPost(@Param("holder") IdHolder id, String account, @Param("post") Post post);
+    void insertPost(@Param("holder") IdHolder<Long> id, String account, @Param("post") Post post);
     Post selectPost(Long id);
     List<Post> selectPosts(int from, int size);
     int countPosts();
-    List<Post> selectCommentsByPostId(Long postId, int from, int size);
+    List<Comment> selectCommentsByPostId(Long postId, int from, int size);
     int countCommentsByPostId(Long postId);
-    void insertComment(@Param("holder") IdHolder id, Long postId, @Param("comment") Comment comment);
+    void insertComment(@Param("holder") IdHolder<Long> id, Long postId, @Param("comment") Comment comment);
     Comment selectComment(Long id);
 
     void clearUser();
     void clearPost();
+    void clearComment();
 }

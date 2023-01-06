@@ -11,6 +11,7 @@
     <resultMap id="userPosts" type="com.example.post.model.UserPosts">
         <id column="account" property="userAccount" javaType="String"/>
     </resultMap>
+
     <resultMap id="postResult" type="com.example.post.model.Post">
         <constructor>
             <arg column="title" javaType="String"/>
@@ -21,7 +22,12 @@
         <association property="author" javaType="com.example.post.support.common.memory.Reference" columnPrefix="author_">
             <association property="entity" resultMap="userResult"/>
         </association>
+        <association property="postComments" resultMap="postComments"/>
     </resultMap>
+    <resultMap id="postComments" type="com.example.post.model.PostComments">
+        <id column="id" property="postId" javaType="Long"/>
+    </resultMap>
+
     <resultMap id="commentResult" type="com.example.post.model.Comment">
         <constructor>
             <arg column="commenter" javaType="String"/>
@@ -110,7 +116,7 @@
         WHERE `post_id` = #{postId}
     </select>
     <insert id="insertComment" useGeneratedKeys="true" keyProperty="holder.id">
-        INSERT INTO `comment`(`postId`, `commenter`, `content`)
+        INSERT INTO `comment`(`post_id`, `commenter`, `content`)
         VALUES(#{postId}, #{comment.commenter}, #{comment.content});
     </insert>
     <select id="selectComment" resultMap="commentResult">
@@ -124,8 +130,7 @@
         FROM `comment` c
         LEFT OUTER JOIN `post` p on c.post_id = p.id
         LEFT OUTER JOIN `user` u on p.author = u.account
-        WHERE c.id = #{id}
-        LIMIT #{from}, #{size};
+        WHERE c.id = #{id};
     </select>
 
     <delete id="clearUser">
@@ -133,5 +138,8 @@
     </delete>
     <delete id="clearPost">
         truncate table `post`;
+    </delete>
+    <delete id="clearComment">
+        truncate table `comment`;
     </delete>
 </mapper>

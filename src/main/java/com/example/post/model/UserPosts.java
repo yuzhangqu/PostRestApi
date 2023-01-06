@@ -27,8 +27,8 @@ public class UserPosts extends EntityList<String, Post> {
         return userMapper.selectPostsByAuthor(userAccount, from, size);
     }
 
-    public IdHolder add(Post post) {
-        IdHolder idHolder = new IdHolder();
+    public IdHolder<Long> add(Post post) {
+        IdHolder<Long> idHolder = new IdHolder<>();
         userMapper.insertPost(idHolder, userAccount, post);
         return idHolder;
     }

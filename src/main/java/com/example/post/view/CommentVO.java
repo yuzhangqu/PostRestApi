@@ -6,6 +6,9 @@ import lombok.Data;
 
 import java.time.Instant;
 
+/**
+ * @author yuzhangqu
+ */
 @Data
 public class CommentVO {
     private Long id;
@@ -37,5 +40,13 @@ public class CommentVO {
             CommentVO.setPost(PostVO.fromDomain(comment.getPost().get()));
         }
         return CommentVO;
+    }
+
+    public String getCommenter() {
+        if (this.commenter == null || this.commenter.isEmpty()) {
+            return "匿名";
+        }
+
+        return this.commenter;
     }
 }

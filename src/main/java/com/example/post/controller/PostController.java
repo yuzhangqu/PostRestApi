@@ -1,6 +1,5 @@
 package com.example.post.controller;
 
-import com.example.post.model.Comment;
 import com.example.post.model.PageModel;
 import com.example.post.model.Post;
 import com.example.post.support.common.Pagination;
@@ -39,7 +38,7 @@ public class PostController {
         this.userMapper = userMapper;
     }
 
-    private EntityModel<PostVO> toPostVOEntityModel(Post post) {
+    public static EntityModel<PostVO> toPostVOEntityModel(Post post) {
         var postVO = PostVO.fromDomain(post);
         var entityModel = EntityModel.of(postVO, linkTo(methodOn(PostController.class).getPost(postVO.getId())).withSelfRel());
         entityModel.add(Link.of("/users/" + postVO.getAuthor().getAccount(), "author").withType("GET"));
@@ -47,10 +46,10 @@ public class PostController {
         return entityModel;
     }
 
-    @GetMapping(path = "/{id}")
+    @GetMapping(path = "/{postId}")
     @Operation(summary = "根据ID获取文章")
-    public ResponseEntity<EntityModel<PostVO>> getPost(@PathVariable Long id) {
-        var post = userMapper.selectPost(id);
+    public ResponseEntity<EntityModel<PostVO>> getPost(@PathVariable Long postId) {
+        var post = userMapper.selectPost(postId);
         if (post == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -71,7 +70,7 @@ public class PostController {
                 .build());
     }
 
-    @GetMapping(path = "/{id}/comments")
+    @GetMapping(path = "/{postId}/comments")
     @Operation(summary = "获取文章的评论列表")
     public ResponseEntity<RepresentationModel<?>> getPostComments(@PathVariable Long postId, @PageableDefault(page = 1) Pageable pageable) {
         var post = userMapper.selectPost(postId);
@@ -90,7 +89,7 @@ public class PostController {
                 .build());
     }
 
-    @PostMapping(path = "/{id}/comments", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/{postId}/comments", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "对指定文章发布评论")
     public ResponseEntity<EntityModel<CommentVO>> createComment(@PathVariable Long postId, @RequestBody CommentVO commentVO) {
         var post = userMapper.selectPost(postId);
@@ -99,8 +98,7 @@ public class PostController {
         }
 
         var idHolder = post.getPostComments().add(commentVO.toDomain());
-        var dbCommentVO = CommentVO.fromDomain(userMapper.selectComment(idHolder.getId()));
-        var entityModel = EntityModel.of(dbCommentVO, linkTo(methodOn(CommentController.class).getComment(dbCommentVO.getId())).withSelfRel());
-        return ResponseEntity.status(HttpStatus.CREATED).body(entityModel);
+        var comment = userMapper.selectComment(idHolder.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(CommentController.toCommentVOEntityModel(comment));
     }
 }
