@@ -1,21 +1,23 @@
 package com.example.post.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.example.post.support.common.HasOne;
+import lombok.Data;
 
 import java.time.Instant;
 
-@Getter
-@Setter
+/**
+ * @author yuzhangqu
+ */
+@Data
 public class Post {
-    private String id;
-    private String author;
+    private Long id;
     private String title;
     private String content;
     private Instant time;
+    private HasOne<User> author;
+    private PostComments postComments;
 
-    public Post(String author, String title, String content) {
-        this.author = author;
+    public Post(String title, String content) {
         this.title = title;
         this.content = content;
     }

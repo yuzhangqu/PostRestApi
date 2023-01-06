@@ -1,13 +1,15 @@
 package com.example.post.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+/**
+ * @author yuzhangqu
+ */
+@Data
 public class User {
     private String account;
     private String name;
+    private UserPosts userPosts;
 
     public User(String account, String name) {
         this.account = account;
