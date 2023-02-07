@@ -1,43 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.post.controller.UserMapper">
-    <resultMap id="userResult" type="com.example.post.model.User">
+<mapper namespace="com.example.post.adapter.outbound.persistent.mybatis.mapper.UserMapper">
+    <resultMap id="userResult" type="com.example.post.domain.contexts.auth.User">
         <constructor>
             <idArg column="account" javaType="String"/>
             <arg column="name" javaType="String"/>
         </constructor>
+    </resultMap>
+
+    <resultMap id="posterResult" type="com.example.post.domain.contexts.post.Poster">
+        <constructor>
+            <idArg column="account" javaType="String"/>
+        </constructor>
         <association property="userPosts" resultMap="userPosts"/>
     </resultMap>
-    <resultMap id="userPosts" type="com.example.post.model.UserPosts">
+    <resultMap id="userPosts" type="com.example.post.adapter.outbound.persistent.mybatis.contexts.post.association.object.UserPostsImpl">
         <id column="account" property="userAccount" javaType="String"/>
     </resultMap>
 
-    <resultMap id="postResult" type="com.example.post.model.Post">
+    <resultMap id="postResult" type="com.example.post.domain.contexts.post.Post">
         <constructor>
             <arg column="title" javaType="String"/>
             <arg column="content" javaType="String"/>
+            <arg column="author" javaType="String"/>
         </constructor>
         <id column="id" property="id" javaType="Long"/>
         <result column="time" property="time" javaType="java.time.Instant"/>
-        <association property="author" javaType="com.example.post.support.common.memory.Reference" columnPrefix="author_">
-            <association property="entity" resultMap="userResult"/>
-        </association>
         <association property="postComments" resultMap="postComments"/>
     </resultMap>
-    <resultMap id="postComments" type="com.example.post.model.PostComments">
+    <resultMap id="postComments" type="com.example.post.adapter.outbound.persistent.mybatis.contexts.post.association.object.PostCommentsImpl">
         <id column="id" property="postId" javaType="Long"/>
     </resultMap>
 
-    <resultMap id="commentResult" type="com.example.post.model.Comment">
+    <resultMap id="commentResult" type="com.example.post.domain.contexts.post.Comment">
         <constructor>
             <arg column="commenter" javaType="String"/>
             <arg column="content" javaType="String"/>
+            <arg column="post_id" javaType="Long"/>
         </constructor>
         <id column="id" property="id" javaType="Long"/>
         <result column="time" property="time" javaType="java.time.Instant"/>
-        <association property="post" javaType="com.example.post.support.common.memory.Reference" columnPrefix="post_">
-            <association property="entity" resultMap="postResult"/>
-        </association>
     </resultMap>
 
     <select id="selectUser" resultMap="userResult">
@@ -50,6 +52,11 @@
         FROM `user`
         LIMIT #{from}, #{size};
     </select>
+    <select id="selectPoster" resultMap="posterResult">
+        SELECT *
+        FROM `user`
+        WHERE `account` = #{account}
+    </select>
     <select id="countUsers" resultType="int">
         SELECT COUNT(1)
         FROM `user`
@@ -59,12 +66,9 @@
         VALUES(#{user.account}, #{user.name});
     </insert>
     <select id="selectPostsByAuthor" resultMap="postResult">
-        SELECT p.id, p.title, p.content, p.time,
-               u.account AS author_account,
-               u.name AS author_name
-        FROM `post` p
-        LEFT OUTER JOIN `user` u on p.author = u.account
-        WHERE p.author = #{account}
+        SELECT *
+        FROM `post`
+        WHERE `author` = #{account}
         LIMIT #{from}, #{size};
     </select>
     <select id="countPostsByAuthor" resultType="int">
@@ -77,19 +81,13 @@
         VALUES(#{account}, #{post.title}, #{post.content});
     </insert>
     <select id="selectPost" resultMap="postResult">
-        SELECT p.id, p.title, p.content, p.time,
-               u.account AS author_account,
-               u.name AS author_name
-        FROM `post` p
-        LEFT OUTER JOIN `user` u on p.author = u.account
-        WHERE p.id = #{id}
+        SELECT *
+        FROM `post`
+        WHERE `id` = #{id}
     </select>
     <select id="selectPosts" resultMap="postResult">
-        SELECT p.id, p.title, p.content, p.time,
-               u.account AS author_account,
-               u.name AS author_name
-        FROM `post` p
-        LEFT OUTER JOIN `user` u on p.author = u.account
+        SELECT *
+        FROM `post`
         LIMIT #{from}, #{size};
     </select>
     <select id="countPosts" resultType="int">
@@ -97,17 +95,9 @@
         FROM `post`
     </select>
     <select id="selectCommentsByPostId" resultMap="commentResult">
-        SELECT c.id, c.commenter, c.content, c.time,
-               p.id AS post_id,
-               p.title AS post_title,
-               p.content AS post_content,
-               p.time AS post_time,
-               u.account AS post_author_account,
-               u.name AS post_author_name
-        FROM `comment` c
-        LEFT OUTER JOIN `post` p on c.post_id = p.id
-        LEFT OUTER JOIN `user` u on p.author = u.account
-        WHERE c.post_id = #{postId}
+        SELECT *
+        FROM `comment`
+        WHERE `post_id` = #{postId}
         LIMIT #{from}, #{size};
     </select>
     <select id="countCommentsByPostId" resultType="int">
@@ -120,17 +110,9 @@
         VALUES(#{postId}, #{comment.commenter}, #{comment.content});
     </insert>
     <select id="selectComment" resultMap="commentResult">
-        SELECT c.id, c.commenter, c.content, c.time,
-               p.id AS post_id,
-               p.title AS post_title,
-               p.content AS post_content,
-               p.time AS post_time,
-               u.account AS post_author_account,
-               u.name AS post_author_name
-        FROM `comment` c
-        LEFT OUTER JOIN `post` p on c.post_id = p.id
-        LEFT OUTER JOIN `user` u on p.author = u.account
-        WHERE c.id = #{id};
+        SELECT *
+        FROM `comment`
+        WHERE `id` = #{id};
     </select>
 
     <delete id="clearUser">

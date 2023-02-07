@@ -1,7 +1,18 @@
 package com.example.post;
 
-import com.example.post.controller.UserMapper;
-import com.example.post.model.*;
+import com.example.post.adapter.inbound.concept.PresentationObject;
+import com.example.post.adapter.outbound.persistent.mybatis.contexts.post.association.object.PostCommentsImpl;
+import com.example.post.adapter.outbound.persistent.mybatis.contexts.post.association.object.UserPostsImpl;
+import com.example.post.adapter.outbound.persistent.mybatis.mapper.UserMapper;
+import com.example.post.domain.concept.AggregationInner;
+import com.example.post.domain.concept.AggregationRoot;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.properties.HasName;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.conditions.ArchConditions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +21,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.RestController;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -69,6 +85,64 @@ class PostApplicationTests {
     }
 
     @Test
+    public void restControllerClassesShouldBeInCorrectPackage() {
+        JavaClasses importedClasses = new ClassFileImporter().importPackages("com.example.post");
+        ArchRule rule = classes().that().haveSimpleNameEndingWith("Controller").should().beAnnotatedWith(RestController.class).andShould().resideInAPackage("com.example.post.adapter.inbound.http");
+        rule.check(importedClasses);
+    }
+
+    @Test
+    void layer_dependencies_must_be_respected_include_the_tests() {
+        JavaClasses classes = new ClassFileImporter().importPackages("com.example.post");
+
+        layeredArchitecture().consideringOnlyDependenciesInLayers()
+                .layer("Adapter").definedBy("com.example.post.adapter..")
+                .layer("Application").definedBy("com.example.post.application..")
+                .layer("Domain").definedBy("com.example.post.domain..")
+                .whereLayer("Adapter").mayNotBeAccessedByAnyLayer()
+                .whereLayer("Application").mayOnlyBeAccessedByLayers("Adapter")
+                .whereLayer("Domain").mayOnlyBeAccessedByLayers("Adapter", "Application")
+                .check(classes);
+    }
+
+    @Test
+    public void should_domain_class_not_depend_on_persistent_tech(){
+        JavaClasses classes = new ClassFileImporter().importPackages("com.example.post");
+
+        ArchRule rule =  classes().that().resideInAPackage("..domain..")
+                .should().notBeAnnotatedWith("org.apache.ibatis.annotations.Mapper");
+
+        rule.check(classes);
+    }
+
+    @Test
+    public void should_depend_context(){
+        JavaClasses classes = new ClassFileImporter().importPackages("com.example.post");
+
+        ArchRule rule = noClasses().that().resideInAPackage("..domain.contexts.auth")
+                .should().dependOnClassesThat().resideInAPackage("..domain.contexts.post");
+        rule.check(classes);
+    }
+
+    @Test
+    public void should_presentation_object_can_access_non_aggregation_object(){
+        JavaClasses classes = new ClassFileImporter().importPackages("com.example.post");
+
+        DescribedPredicate<JavaClass> fullNameInDomain =
+                HasName.AndFullName.Predicates.fullNameMatching("com.example.post..+")
+                        .forSubtype();
+
+        DescribedPredicate<JavaClass> notBeDepend = JavaClass.Predicates.implement(AggregationInner.class)
+                .and(fullNameInDomain);
+
+        ArchRule rule = classes().that().doNotImplement(PresentationObject.class)
+                .and().doNotImplement(AggregationRoot.class)
+                .should(ArchConditions.not(ArchConditions.dependOnClassesThat(notBeDepend)));
+
+        rule.check(classes);
+    }
+
+    @Test
     void testCreateUser() throws Exception {
         var originCount = userMapper.countUsers();
         mockMvc.perform(post("/users")
@@ -120,13 +194,14 @@ class PostApplicationTests {
 
     @Test
     void testCreatePost() throws Exception {
-        var user = userMapper.selectUser("lisi");
-        var originCount = user.getUserPosts().size();
+        var poster = userMapper.selectPoster("lisi");
+        UserPostsImpl userPosts = (UserPostsImpl) poster.getUserPosts();
+        var originCount = userPosts.size();
         mockMvc.perform(post("/users/lisi/posts")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("{\"title\":\"李四的文章2\", \"content\":\"李四的文章2的内容\"}"))
                 .andExpect(status().isCreated());
-        assertThat(user.getUserPosts().size()).isEqualTo(originCount + 1);
+        assertThat(userPosts.size()).isEqualTo(originCount + 1);
     }
 
     @Test
@@ -226,12 +301,13 @@ class PostApplicationTests {
     @Test
     void testCreateComment() throws Exception {
         var post = userMapper.selectPost(1L);
-        var originCount = post.getPostComments().size();
+        PostCommentsImpl postComments = (PostCommentsImpl) post.getPostComments();
+        var originCount = postComments.size();
         mockMvc.perform(post("/posts/1/comments")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content("{\"content\":\"匿名评论1\"}"))
                 .andExpect(status().isCreated());
-        assertThat(post.getPostComments().size()).isEqualTo(originCount + 1);
+        assertThat(postComments.size()).isEqualTo(originCount + 1);
     }
 
     @Test

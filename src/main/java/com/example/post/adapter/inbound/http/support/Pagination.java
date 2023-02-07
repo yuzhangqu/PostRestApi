@@ -1,0 +1,25 @@
+package com.example.post.adapter.inbound.http.support;
+
+import com.example.post.domain.concept.Many;
+import lombok.Data;
+
+/**
+ * @author yuzhangqu
+ */
+@Data
+public class Pagination<T> {
+    private int pageSize;
+    private Many<T> many;
+    private final int total;
+
+    public Pagination(int pageSize, Many<T> many) {
+        this.pageSize = pageSize;
+        this.many = many;
+        this.total = many.size();
+    }
+
+    public Many<T> page(int pageNum) {
+        Many<T> current = many.subCollection(pageNum * pageSize, Math.min(total, (pageNum + 1) * pageSize));
+        return current;
+    }
+}
